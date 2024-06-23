@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shopping_list/data/category_data.dart';
 import 'package:shopping_list/models/category.dart';
+
+import 'package:http/http.dart' as http;
 import 'package:shopping_list/models/grocery_items.dart';
 
 class NewItem extends StatefulWidget {
@@ -13,6 +17,8 @@ class NewItem extends StatefulWidget {
 }
 
 class _NewItemState extends State<NewItem> {
+  var _isSending = false;
+
   //global key --> gives easy access to underlying widgets and if the build is executed again then the form is not rebuilt and instead keeps its internal state
   //we will always use globalkey with form in flutter
 
@@ -22,17 +28,37 @@ class _NewItemState extends State<NewItem> {
   var _selectedQuantity = 1;
   var _selectedCateogry = categories[Categories.fruit]!;
 
-  void _saveItem() {
+  void _saveItem() async {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!
-          .save(); // this automtically calls all the onSaved operations in the Form
-      // print(_selectedTitle);
-      // print(_selectedQuantity);
-      // print(_selectedCateogry.title);
+      _formKey.currentState!.save();
+      setState(() {
+        _isSending = true;
+      }); // this automtically calls all the onSaved operations in the Form
+    }
+
+    var url = Uri.https(
+        "grocerylist-42da4-default-rtdb.asia-southeast1.firebasedatabase.app",
+        'grocery-Items-List.json');
+
+    var response = await http.post(url,
+        headers: {'content-type': 'application/json'},
+        //we need to encode to json format for firebase and id is automatically genered by firebase
+        body: json.encode({
+          "name": _selectedTitle,
+          "quantity": _selectedQuantity,
+          "category": _selectedCateogry.title
+          //here encoding of category object failed, hence we passed only the title
+        }));
+
+    var resData = json.decode(response.body);
+    print(resData);
+
+    if (!context.mounted) {
+      return;
     }
 
     Navigator.of(context).pop(GroceryItem(
-        id: DateTime.now().toString(),
+        id: resData['name'],
         name: _selectedTitle,
         quantity: _selectedQuantity,
         category: _selectedCateogry));
@@ -134,12 +160,22 @@ class _NewItemState extends State<NewItem> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                        onPressed: () {
-                          _formKey.currentState!.reset();
-                        },
+                        //to disable any button, simply pass null as the function onpressed
+                        onPressed: _isSending
+                            ? null
+                            : () {
+                                _formKey.currentState!.reset();
+                              },
                         child: const Text("Reset")),
                     ElevatedButton(
-                        onPressed: _saveItem, child: const Text("Add Item"))
+                        onPressed: _isSending ? null : _saveItem,
+                        child: _isSending
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(),
+                              )
+                            : const Text("Add Item"))
                   ],
                 )
               ],

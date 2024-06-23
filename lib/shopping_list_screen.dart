@@ -1,9 +1,14 @@
-import 'dart:math';
+import 'dart:convert';
+import 'dart:ffi';
+import 'dart:isolate';
 
 import 'package:flutter/material.dart';
+import 'package:shopping_list/data/category_data.dart';
 import 'package:shopping_list/models/grocery_items.dart';
 import 'package:shopping_list/widgets/item.dart';
 import 'package:shopping_list/widgets/new_item.dart';
+
+import 'package:http/http.dart' as http;
 
 class ShoppingListScreen extends StatefulWidget {
   const ShoppingListScreen({super.key});
@@ -13,7 +18,61 @@ class ShoppingListScreen extends StatefulWidget {
 }
 
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
-  final List<GroceryItem> _groceryItems = [];
+  List<GroceryItem> _groceryItems = [];
+
+  var _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadItems();
+  }
+
+  void loadItems() async {
+    final List<GroceryItem> loadedGroceryItems = [];
+
+    final url = Uri.https(
+        "grocerylist-42da4-default-rtdb.asia-southeast1.firebasedatabase.app",
+        'grocery-Items-List.json');
+
+    final response = await http.get(url);
+
+    final Map<String, dynamic> listData = json.decode(response.body);
+
+    for (final item in listData.entries) {
+      final category = categories.entries
+          .firstWhere(
+            (catItem) => catItem.value.title == item.value['category'],
+          )
+          .value;
+
+      loadedGroceryItems.add(
+        GroceryItem(
+          id: item.key,
+          name: item.value['name'],
+          quantity: item.value['quantity'],
+          category: category,
+        ),
+      );
+    }
+
+    setState(() {
+      _groceryItems = loadedGroceryItems;
+      _isLoading = false;
+    });
+  }
+
+  void addItem() async {
+    var newItem = await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => const NewItem()));
+
+    if (newItem == null) {
+      return;
+    }
+    setState(() {
+      _groceryItems.add(newItem);
+    });
+  }
 
   void _removeGroceryItem(GroceryItem item) {
     //we find the index so that we can undo the deletion and insert in same index
@@ -40,34 +99,50 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    void addItem() async {
-      var newItem = await Navigator.of(context).push<GroceryItem>(
-          MaterialPageRoute(builder: (context) => const NewItem()));
+    Widget content = Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Add some items clicking here",
+            style: TextStyle(fontSize: 18),
+          ),
+          IconButton(
+              onPressed: addItem,
+              icon: const Icon(
+                Icons.add,
+                size: 30,
+                color: Colors.white,
+              ))
+        ],
+      ),
+    );
 
-      if (newItem == null) {
-        return;
-      }
-
-      setState(() {
-        _groceryItems.add(newItem);
-      });
+    if (_isLoading) {
+      content = const Center(
+        child: CircularProgressIndicator(),
+      );
     }
 
-    Widget content = ListView.builder(
-        itemCount: _groceryItems.length,
-        itemBuilder: (context, index) => Dismissible(
-              key: ValueKey(_groceryItems[index].id),
-              child: Item(
-                groceryitem: _groceryItems[index],
-              ),
-              onDismissed: (direction) =>
-                  _removeGroceryItem(_groceryItems[index]),
-            ));
-
-    if (_groceryItems.isEmpty) {
-      content = const Center(
-        child: Text("Add some items!"),
-      );
+    if (_groceryItems.isNotEmpty) {
+      content = ListView.builder(
+          itemCount: _groceryItems.length,
+          itemBuilder: (context, index) => Dismissible(
+                background: Container(
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Theme.of(context).colorScheme.error.withOpacity(0.7),
+                  ),
+                ),
+                key: ValueKey(_groceryItems[index].id),
+                child: Item(
+                  groceryitem: _groceryItems[index],
+                ),
+                onDismissed: (direction) =>
+                    _removeGroceryItem(_groceryItems[index]),
+              ));
     }
 
     return Scaffold(
@@ -78,7 +153,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             style: TextStyle(color: Colors.white),
           ),
           actions: [
-            IconButton(onPressed: addItem, icon: const Icon(Icons.add))
+            IconButton(
+                onPressed: addItem,
+                icon: const Icon(
+                  Icons.add,
+                  color: Colors.white,
+                ))
           ],
         ),
         body: content);
