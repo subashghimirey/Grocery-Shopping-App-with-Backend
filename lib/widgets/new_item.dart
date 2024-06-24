@@ -18,6 +18,8 @@ class NewItem extends StatefulWidget {
 
 class _NewItemState extends State<NewItem> {
   var _isSending = false;
+  var error_occured = false;
+  Map<dynamic, dynamic> resData = {};
 
   //global key --> gives easy access to underlying widgets and if the build is executed again then the form is not rebuilt and instead keeps its internal state
   //we will always use globalkey with form in flutter
@@ -40,28 +42,36 @@ class _NewItemState extends State<NewItem> {
         "grocerylist-42da4-default-rtdb.asia-southeast1.firebasedatabase.app",
         'grocery-Items-List.json');
 
-    var response = await http.post(url,
-        headers: {'content-type': 'application/json'},
-        //we need to encode to json format for firebase and id is automatically genered by firebase
-        body: json.encode({
-          "name": _selectedTitle,
-          "quantity": _selectedQuantity,
-          "category": _selectedCateogry.title
-          //here encoding of category object failed, hence we passed only the title
-        }));
+    try {
+      var response = await http.post(url,
+          headers: {'content-type': 'application/json'},
+          //we need to encode to json format for firebase and id is automatically genered by firebase
+          body: json.encode({
+            "name": _selectedTitle,
+            "quantity": _selectedQuantity,
+            "category": _selectedCateogry.title
+            //here encoding of category object failed, hence we passed only the title
+          }));
 
-    var resData = json.decode(response.body);
-    print(resData);
+      resData = json.decode(response.body);
 
-    if (!context.mounted) {
-      return;
+      if (!context.mounted) {
+        return;
+      }
+    } catch (error) {
+      setState(() {
+        error_occured = true;
+        _isSending = false;
+      });
     }
-
-    Navigator.of(context).pop(GroceryItem(
-        id: resData['name'],
-        name: _selectedTitle,
-        quantity: _selectedQuantity,
-        category: _selectedCateogry));
+    error_occured
+        ? ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("no internet")))
+        : Navigator.of(context).pop(GroceryItem(
+            id: resData['name'],
+            name: _selectedTitle,
+            quantity: _selectedQuantity,
+            category: _selectedCateogry));
   }
 
   @override

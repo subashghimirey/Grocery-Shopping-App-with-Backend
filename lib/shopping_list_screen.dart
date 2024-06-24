@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:ffi';
-import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 import 'package:shopping_list/data/category_data.dart';
@@ -21,6 +19,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   List<GroceryItem> _groceryItems = [];
 
   var _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -35,31 +34,51 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         "grocerylist-42da4-default-rtdb.asia-southeast1.firebasedatabase.app",
         'grocery-Items-List.json');
 
-    final response = await http.get(url);
+    try {
+      final response = await http.get(url);
 
-    final Map<String, dynamic> listData = json.decode(response.body);
+      if (response.statusCode >= 400) {
+        setState(() {
+          _error = "Failed to fetch data from server!!";
+        });
+      }
 
-    for (final item in listData.entries) {
-      final category = categories.entries
-          .firstWhere(
-            (catItem) => catItem.value.title == item.value['category'],
-          )
-          .value;
+      if (response.body == 'null') {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
 
-      loadedGroceryItems.add(
-        GroceryItem(
-          id: item.key,
-          name: item.value['name'],
-          quantity: item.value['quantity'],
-          category: category,
-        ),
-      );
+      final Map<String, dynamic> listData = json.decode(response.body);
+
+      for (final item in listData.entries) {
+        final category = categories.entries
+            .firstWhere(
+              (catItem) => catItem.value.title == item.value['category'],
+            )
+            .value;
+
+        loadedGroceryItems.add(
+          GroceryItem(
+            id: item.key,
+            name: item.value['name'],
+            quantity: item.value['quantity'],
+            category: category,
+          ),
+        );
+      }
+
+      setState(() {
+        _groceryItems = loadedGroceryItems;
+        _isLoading = false;
+      });
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+        _error = "Something went wrong, visit in few minutes!";
+      });
     }
-
-    setState(() {
-      _groceryItems = loadedGroceryItems;
-      _isLoading = false;
-    });
   }
 
   void addItem() async {
@@ -74,26 +93,49 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     });
   }
 
-  void _removeGroceryItem(GroceryItem item) {
+  void _removeGroceryItem(GroceryItem item) async {
     //we find the index so that we can undo the deletion and insert in same index
     var index = _groceryItems.indexOf(item);
+
+    var deleted = true;
 
     setState(() {
       _groceryItems.remove(item);
     });
 
+    final url = Uri.https(
+        "grocerylist-42da4-default-rtdb.asia-southeast1.firebasedatabase.app",
+        'grocery-Items-List/${item.id}.json');
+
+    final response = await http.delete(url);
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        _groceryItems.insert(index, item);
+        deleted = false;
+      });
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: const Text("Grocery Item Deleted"),
+      content: deleted
+          ? const Text("Item deleted successfully")
+          : const Text("Failed to delete"),
       duration: const Duration(seconds: 2),
-      action: SnackBarAction(
-        label: "Undo",
-        onPressed: () {
-          return setState(() {
-            _groceryItems.insert(index, item);
-          });
-        },
-      ),
+      // action: deleted
+      //     ? SnackBarAction(
+      //         label: "Undo",
+      //         onPressed: () {
+      //           return setState(() {
+      //             _groceryItems.insert(index, item);
+      //           });
+      //         },
+      //       )
+      //     : null,
     ));
   }
 
@@ -143,6 +185,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 onDismissed: (direction) =>
                     _removeGroceryItem(_groceryItems[index]),
               ));
+    }
+
+    if (_error != null) {
+      content = Center(
+        child: Text(_error!),
+      );
     }
 
     return Scaffold(
