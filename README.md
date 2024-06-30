@@ -1,16 +1,69 @@
-# shopping_list
+# Grocery Shopping List App
 
-A new Flutter project.
+🚀 Welcome to the Grocery Shopping List App! 🚀
 
-## Getting Started
+This project is part of my Flutter learning journey, where I explored building a mobile application with Flutter and integrating it with Firebase for backend functionality. 
 
-This project is a starting point for a Flutter application.
+## 📱 What I Built
 
-A few resources to get you started if this is your first Flutter project:
+This app helps users manage their grocery shopping lists with a simple and intuitive interface.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+##ScreenShots
+![Screenshot_1719769537](https://github.com/subashghimirey/Grocery-Shopping-App-with-Backend/assets/88834868/6a413e75-1492-4569-9c84-2f34927d90ef)
+![Screenshot_1719769542](https://github.com/subashghimirey/Grocery-Shopping-App-with-Backend/assets/88834868/ecf078c5-9e43-43e5-a643-d402bfbc5761)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Frontend
+- **Add Grocery Items**: Users can enter grocery items using `TextFormField` and select categories from a dropdown menu with `DropDownButtonFormField`.
+- **Display Items**: The app shows a dynamic list of grocery items using `ListView.builder`.
+- **Loading States**: Utilizes `CircularProgressIndicator` to manage loading states.
+- **Delete Items**: Users can delete items with swipe gestures, and an Undo Snackbar appears for accidental deletions.
+- **Error Handling**: Implemented `try-catch` blocks and status codes for robust error management.
+
+### Backend Integration
+- **Firebase**: Integrated Firebase for data storage, including `POST` and `GET` operations to manage grocery items.
+
+## ✨ Key Features
+
+- Add and validate grocery items.
+- Display a list of grocery items with real-time updates.
+- Manage loading states and display error messages.
+- Swipe to delete items with an Undo option.
+
+## 🛠️ Technologies Used
+
+- **Flutter**: Framework for building the app’s frontend.
+- **Firebase**: Backend service for data storage and management.
+- **Dart**: Programming language used for Flutter development.
+
+## 🏗️ Getting Started
+
+To get started with this project, follow these steps:
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/grocery-shopping-list-app.git
+
+2. **Navigate to the Project Directory**:
+    ```bash
+    cd grocery-shopping-list-app
+    
+3. **Install Dependencies**:
+    ```bash
+    flutter pub get
+
+4. **Set Up Firebase**:
+
+Follow the [Firebase setup guide](https://firebase.google.com/docs/flutter/setup) to configure Firebase for your app.
+
+    1. Add your `google-services.json` to the `android/app` directory for Android.
+    2. Add your `GoogleService-Info.plist` to the `ios/Runner` directory for iOS.
+
+5. **Run the App**:  
+    ```bash
+    flutter run
+
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+## Contributing
+Contributions are welcome! Feel free to open issues or submit pull requests.
