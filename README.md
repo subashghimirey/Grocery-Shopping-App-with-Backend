@@ -9,8 +9,10 @@ This project is part of my Flutter learning journey, where I explored building a
 This app helps users manage their grocery shopping lists with a simple and intuitive interface.
 
 ##ScreenShots
-![Screenshot_1719769537](https://github.com/subashghimirey/Grocery-Shopping-App-with-Backend/assets/88834868/6a413e75-1492-4569-9c84-2f34927d90ef)
-![Screenshot_1719769542](https://github.com/subashghimirey/Grocery-Shopping-App-with-Backend/assets/88834868/ecf078c5-9e43-43e5-a643-d402bfbc5761)
+<img src="https://github.com/subashghimirey/Grocery-Shopping-App-with-Backend/assets/88834868/6a413e75-1492-4569-9c84-2f34927d90ef" alt="Screenshot_1719769537" width="180" height="350" />
+<img src="https://github.com/subashghimirey/Grocery-Shopping-App-with-Backend/assets/88834868/ecf078c5-9e43-43e5-a643-d402bfbc5761" alt="Screenshot_1719769542" width="180" height="350" />
+
+## Set Up Firebase
 
 ### Frontend
 - **Add Grocery Items**: Users can enter grocery items using `TextFormField` and select categories from a dropdown menu with `DropDownButtonFormField`.
